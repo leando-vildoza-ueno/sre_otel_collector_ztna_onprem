@@ -12,13 +12,6 @@ extensions:
       exporter_failure_threshold: 3
 
 receivers:
-  otlp:
-    protocols:
-      http:
-        endpoint: 0.0.0.0:4318
-      grpc:
-        endpoint: 0.0.0.0:4317
-
   prometheus:
     config:
       global:
@@ -26,44 +19,7 @@ receivers:
         scrape_timeout: 15s
       scrape_configs:
         - job_name: 'ztna_metrics'
-          #ec2_sd_configs:
-          #  - region: ${AWS_REGION}
-          #    port: 8080
-          #    role_arn: ${AWS_ARN}
           metrics_path: /metrics
-          relabel_configs:
-            #- source_labels: [__meta_ec2_tag_application]
-            #  regex: kong-c-2-m-.*
-            #  action: keep
-
-            #- source_labels: [__meta_ec2_tag_scope]
-            #  regex: sae-1-.*
-            #  action: keep
-
-            # application(tag) -> kong(label)
-            #- source_labels: [__meta_ec2_tag_application]
-            #  target_label: kong
-            #  regex: (.*)
-            #  replacement: $1
-            #  action: replace
-
-            # scope(tag) -> scope(label)
-            #- source_labels: [__meta_ec2_tag_scope]
-            #  target_label: scope
-            #  regex: (.*)
-            #  replacement: $1
-            #  action: replace
-
-            #- source_labels: [__address__]
-            #  regex: (.*)
-            #  target_label: instance
-            #  replacement: 'ZTNA On-Premise - $1'
-
-          # source_labels: [__address__]
-          # regex: (.*)
-          # target_label: instance
-          # replacement: 'ZTNA On-Premise - $1' -> ZTNA On-Premise - <IP> (si es que se usa)
-
 
 processors:
   memory_limiter:
@@ -71,101 +27,46 @@ processors:
     limit_percentage: 75
     spike_limit_percentage: 25
 
-  batch: {}
+  filter/keep_ztna_and_custom: #Deja pasar sólo métricas "custom_ztna"
+    metrics:
+      include:
+        match_type: regexp
+        metric_names:
+          - "^custom_ztna_.*$"
 
-  # Recurso común para identificar el servicio
-  #resource/ztna_onpremise:
-  #  attributes:
-  #    - key: service.name
-  #      value: ztna-onpremise
-  #      action: insert
-
-  # Extrae team / app / scope desde el label "service" tipo "team.app.scope.service"
-  #attributes/ztna_onpremise_labels:
-  #  include:
-  #    match_type: strict
-  #    metric_names:
-  #      # originales
-  #      - ztna_onpremise_http_requests_total
-  #      - ztna_onpremise_request_latency_ms_sum
-  #      - ztna_onpremise_request_latency_ms_count
-  #      - ztna_onpremise_request_latency_ms_bucket
-  #      - ztna_onpremise_upstream_latency_ms_sum
-  #      - ztna_onpremise_upstream_latency_ms_count
-  #      - ztna_onpremise_upstream_latency_ms_bucket
-
-        # renombradas (para que siga aplicando después del transform)
-  #      - custom_ztna_onpremise_http_requests_total
-  #      - custom_ztna_onpremise_request_latency_ms_sum
-  #      - custom_ztna_onpremise_request_latency_ms_count
-  #      - custom_ztna_onpremise_request_latency_ms_bucket
-  #      - custom_ztna_onpremise_upstream_latency_ms_sum
-  #      - custom_ztna_onpremise_upstream_latency_ms_count
-  #      - custom_ztna_onpremise_upstream_latency_ms_bucket
-  #    actions:
-  #      - key: service
-  #        action: extract
-  #        pattern: ^(?P<team>[^.]+)\.(?P<app>[^.]+)\.(?P<scope>[^.]+)\.service$
-
-  # Renombra las métricas de Kong a "custom_kong_*"
-  #transform/ztna_onpremise_metrics:
-  #  error_mode: ignore
-  #  metric_statements:
-  #    - context: metric
-  #      statements:
-  #        - set(name, "custom_ztna_onpremise_http_requests_total")
-  #          where name == "ztna_onpremise_http_requests_total"
-
-  #        - set(name, "custom_ztna_onpremise_upstream_latency_ms_sum")
-  #          where name == "ztna_onpremise_upstream_latency_ms_sum"
-
-  # Deja pasar sólo métricas "kong"
-  #filter/keep_ztna_onpremise_and_custom:
-  #  metrics:
-  #    include:
-  #      match_type: regexp
-  #      metric_names:
-  #        - "^ztna_onpremise_.*$"
-  #        - "^custom_ztna_onpremise_.*$"
+  batch: #SOLO PRODUCCIÓN
+    timeout: 5s
+    send_batch_size: 256
+    send_batch_max_size: 512
 
 exporters:
-  # OTLP → New Relic (traces/logs + métricas OTLP)
-  otlphttp/newrelic:
-    endpoint: ${NEW_RELIC_ENDPOINT}
-    headers:
-      api-key: ${NEW_RELIC_API_KEY}
-    retry_on_failure:
-      enabled: true
-      initial_interval: 1s
-      max_interval: 30s
-      max_elapsed_time: 300s
-    sending_queue:
-      enabled: true
-      num_consumers: 4
-      queue_size: 2000
-
-  # Prometheus Remote Write → New Relic (para scrapeo Prometheus)
-  prometheusremotewrite:
+  prometheusremotewrite: #Prometheus Remote Write → New Relic (para scrapeo Prometheus)
     endpoint: "https://metric-api.newrelic.com/prometheus/v1/write"
     headers:
-      api-key: ${NEW_RELIC_API_KEY}
+      api-key: 4cab137d561e18308687c7cc5ea9af4aFFFFNRAL
     external_labels:
-      prometheus_server: platform-otel-collector-ztna-onpremise
+      prometheus_server: otel-collector-ztna #Nombre del servidor de Prometheus
+    compression: none #gzip
+    timeout: 60s #SOLO EN PRODUCCIÓN
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 1800s
 
-  # Exportador de logging (solo en Dev)
-  logging/debug:
+  logging/debug: #Exportador de logging
     verbosity: detailed
 
 service:
   extensions: [health_check]
+  telemetry:
+    logs:
+      level: "debug"
   pipelines:
     metrics:
-      receivers: [prometheus, otlp]
+      receivers: [prometheus]
       processors:
         - memory_limiter
-        #- attributes/kong_labels
-        #- transform/kong_metrics
-        #- filter/keep_kong_and_custom
+        - filter/keep_ztna_and_custom
         - batch
-        #- resource/kong
       exporters: [logging/debug, prometheusremotewrite]
