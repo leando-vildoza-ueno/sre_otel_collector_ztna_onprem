@@ -1,4 +1,3 @@
-
 services:
   dummy-ok:
     image: python:3.11-slim
@@ -10,7 +9,6 @@ services:
       
   otel-collector:
     platform: linux/arm64
-    #image: otel/opentelemetry-collector-contrib:0.104.0
     image: otel/opentelemetry-collector-contrib:nightly
 
     command: ["--config=/etc/otelcol-contrib/config.yaml"]
