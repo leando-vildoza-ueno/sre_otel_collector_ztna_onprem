@@ -14,30 +14,33 @@ extensions:
 receivers:
   prometheus:
     config:
-      global:
-        scrape_interval: 30s
-        scrape_timeout: 15s
       scrape_configs:
         - job_name: 'ztna_metrics'
+          scrape_interval: 30s
+          scrape_timeout: 15s
           metrics_path: /metrics
+          static_configs:
+            - targets: 
+                - 192.168.36.86:60123
+                - 192.168.36.87:60123
+                - 192.168.36.88:60123
+                - 192.168.36.89:60123
+                - 172.26.40.1:61000
+                - 172.26.40.2:61000
+                - 172.26.40.3:61000
+                - 172.26.40.4:61000
+                - 172.26.40.5:61000
+                - 172.26.49.6:61000
 
 processors:
   memory_limiter:
-    check_interval: 10s
-    limit_percentage: 75
-    spike_limit_percentage: 25
+    check_interval: 1s
+    limit_mib: 2048
+    spike_limit_mib: 512
 
-  filter/keep_ztna_and_custom: #Deja pasar sólo métricas "custom_ztna"
-    metrics:
-      include:
-        match_type: regexp
-        metric_names:
-          - "^custom_ztna_.*$"
-
-  batch: #SOLO PRODUCCIÓN
-    timeout: 5s
-    send_batch_size: 256
-    send_batch_max_size: 512
+  batch:
+    timeout: 10s
+    send_batch_size: 10000
 
 exporters:
   prometheusremotewrite: #Prometheus Remote Write → New Relic (para scrapeo Prometheus)
@@ -67,6 +70,5 @@ service:
       receivers: [prometheus]
       processors:
         - memory_limiter
-        - filter/keep_ztna_and_custom
         - batch
       exporters: [logging/debug, prometheusremotewrite]
