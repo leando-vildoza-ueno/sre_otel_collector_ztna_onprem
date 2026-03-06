@@ -1,6 +1,6 @@
 # ZTNA On-Premise OTel Collector Config
 #
-# This config is used to collect metrics from the ZTNA On-Premise environment.
+# This config is used to collect metrics from the ZTNA On-Premise and OCI environment.
 
 extensions:
   health_check:
