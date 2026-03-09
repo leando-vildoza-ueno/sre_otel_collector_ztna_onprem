@@ -19,84 +19,86 @@ receivers:
           static_configs:
             - targets:
                 - 192.168.36.86:60123
+                - 192.168.36.87:60123 #ztna_metrics_ub_ztna02
               labels:
                 environment: onprem
                 source: ztna
 
-        - job_name: ztna_metrics_ub_ztna02
-          scrape_interval: 30s
-          scrape_timeout: 15s
-          metrics_path: /metrics
-          scheme: http
-          static_configs:
-            - targets:
-                - 192.168.36.87:60123
-              labels:
-                environment: onprem
-                source: ztna
+    #    - job_name: ztna_metrics_ub_ztna02
+    #      scrape_interval: 30s
+    #      scrape_timeout: 15s
+    #      metrics_path: /metrics
+    #      scheme: http
+    #      static_configs:
+    #        - targets:
+    #            - 192.168.36.87:60123
+    #          labels:
+    #            environment: onprem
+    #            source: ztna
         
-        - job_name: ztna_metrics_ub_ztna03
-          scrape_interval: 30s
-          scrape_timeout: 15s
-          metrics_path: /metrics
-          scheme: http
-          static_configs:
-            - targets:
-                - 192.168.36.88:60123
-              labels:
-                environment: onprem
-                source: ztna
+    #    - job_name: ztna_metrics_ub_ztna03
+    #      scrape_interval: 30s
+    #      scrape_timeout: 15s
+    #      metrics_path: /metrics
+    #      scheme: http
+    #      static_configs:
+    #        - targets:
+    #            - 192.168.36.88:60123
+    #          labels:
+    #            environment: onprem
+    #            source: ztna
 
-        - job_name: ztna_metrics_ub_ztna04
-          scrape_interval: 30s
-          scrape_timeout: 15s
-          metrics_path: /metrics
-          scheme: http
-          static_configs:
-            - targets:
-                - 192.168.36.89:60123
-              labels:
-                environment: onprem
-                source: ztna
+    #    - job_name: ztna_metrics_ub_ztna04
+    #      scrape_interval: 30s
+    #      scrape_timeout: 15s
+    #      metrics_path: /metrics
+    #      scheme: http
+    #      static_configs:
+    #        - targets:
+    #            - 192.168.36.89:60123
+    #          labels:
+    #            environment: onprem
+    #            source: ztna
 
-        - job_name: ztna_metrics_tunel_dc_tigo
-          scrape_interval: 30s
-          scrape_timeout: 15s
-          metrics_path: /metrics
-          scheme: http
-          static_configs:
-            - targets:
-                - 172.26.40.1:61000
-                - 172.26.40.2:61000
-                - 172.26.40.4:61000
-              labels:
-                environment: oci
-                source: ztna
+    #    - job_name: ztna_metrics_tunel_dc_tigo
+    #      scrape_interval: 30s
+    #      scrape_timeout: 15s
+    #      metrics_path: /metrics
+    #      scheme: http
+    #      static_configs:
+    #        - targets:
+    #            - 172.26.40.1:61000
+    #            - 172.26.40.2:61000
+    #            - 172.26.40.4:61000
+    #          labels:
+    #            environment: oci
+    #            source: ztna
 
-        - job_name: ztna_metrics_tunel_camaras
-          scrape_interval: 30s
-          scrape_timeout: 15s
-          metrics_path: /metrics
-          scheme: http
-          static_configs:
-            - targets:
-                - 172.26.40.5:61000
-                - 172.26.49.6:61000
-              labels:
-                environment: oci
-                source: ztna
+    #     - job_name: ztna_metrics_tunel_camaras
+    #      scrape_interval: 30s
+    #      scrape_timeout: 15s
+    #      metrics_path: /metrics
+    #      scheme: http
+    #      static_configs:
+    #        - targets:
+    #            - 172.26.40.5:61000
+    #            - 172.26.49.6:61000
+    #          labels:
+    #            environment: oci
+    #            source: ztna
 
-        - job_name: ztna_metrics_ub_tunel_mgmt
-          scrape_interval: 30s
-          scrape_timeout: 15s
-          metrics_path: /metrics
-          scheme: http
-          static_configs:
-            - targets:
-                - 172.26.40.3:61000
-              labels:
-                environment: oci
-                source: ztna
+    #    - job_name: ztna_metrics_ub_tunel_mgmt
+    #      scrape_interval: 30s
+    #      scrape_timeout: 15s
+    #      metrics_path: /metrics
+    #      scheme: http
+    #      static_configs:
+    #        - targets:
+    #            - 172.26.40.3:61000
+    #          labels:
+    #            environment: oci
+    #            source: ztna
+
 processors:
   memory_limiter:
     check_interval: 1s
@@ -133,4 +135,4 @@ service:
     metrics:
       receivers: [prometheus]
       processors: [memory_limiter, batch]
-      exporters: [debug, prometheusremotewrite]
+      exporters: [debug]
